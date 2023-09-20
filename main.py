@@ -123,14 +123,14 @@ def Cd(input_command):
     global current_path
     result_is_argument = IsArgument(input_command)
     if result_is_argument[0].startswith("/") or result_is_argument[0].startswith("\\"):
-        Paths = result_is_argument[0][4:]
+        path = result_is_argument[0][4:]
     else:
-        Paths = result_is_argument[0][3:]
-    result_check = FullCheck(Paths)
+        path = result_is_argument[0][3:]
+    result_check = FullCheck(path)
     if not result_is_argument[1] and not result_check[0]:
         print(f"Sorry but this disk or folder doesn't exist: {result_check[1]}")
     elif result_is_argument[1] and not result_check[0] and result_check[2] == "Not disk":
-        MakeFolders(Paths)
+        MakeFolders(path)
     elif result_check[0]:
         current_path = result_check[1]
     return
@@ -177,15 +177,15 @@ def MakeFolders(input_path):
     :return: There is no return.
     """
     global current_path
-    SplittedPaths = PathsCutter(input_path)
-    FoundOneMissing = False
-    for Folder in SplittedPaths:
+    splitted_path = PathsCutter(input_path)
+    found_one_missing = False
+    for Folder in splitted_path:
         if Folder != "":
-            if not FoundOneMissing:
-                CheckedFolder = FullCheck(current_path + Folder)
-                if not CheckedFolder[0]:
-                   FoundOneMissing = True
-            if FoundOneMissing:
+            if not found_one_missing:
+                result_check = FullCheck(current_path + Folder)
+                if not result_check[0]:
+                   found_one_missing = True
+            if found_one_missing:
                 current_path += Folder + "/"
                 os.mkdir(current_path)
             else:
