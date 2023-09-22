@@ -1,5 +1,10 @@
 import os
 import subprocess
+import time
+import GUI
+from GUI import GUIstart, GUIout
+import threading
+import tkinter as tk
 
 current_path = "C:/"
 def FullCheck(input_path):
@@ -24,7 +29,7 @@ def FullCheck(input_path):
     for path_item in pathsplitted:
         if path_item != "":
             results_foldercheck = FolderCheck(tmp_current_path, path_item)
-            if not results_foldercheck[1]:
+            if not results_foldercheck[0]:
                 return False, path_item, "Not disk"
             else:
                 tmp_current_path = results_foldercheck[1]
@@ -42,8 +47,6 @@ def FolderCheck(input_path, input_pathsplitted):
     if input_pathsplitted != "" and input_pathsplitted != "..":
         result_folderforward = FolderMoveForward(input_path, input_pathsplitted)
         if result_folderforward[0]:
-            return True, result_folderforward[1]
-        else:
             return True, result_folderforward[1]
     return False, "Undefined"
 def DiskCheck(input_path):
@@ -108,7 +111,7 @@ def FileShowing(input_path):
     checkdirectory = os.scandir(input_path)
     for entry in checkdirectory:
         if entry.is_dir() or entry.is_file():
-            print(entry.name)
+            GUIout(f" {entry.name}")
 
 
 
@@ -128,7 +131,7 @@ def Cd(input_command):
         path = result_is_argument[0][3:]
     result_check = FullCheck(path)
     if not result_is_argument[1] and not result_check[0]:
-        print(f"Sorry but this disk or folder doesn't exist: {result_check[1]}")
+        GUIout(f"Sorry but this disk or folder doesn't exist: {result_check[1]}")
     elif result_is_argument[1] and not result_check[0] and result_check[2] == "Not disk":
         MakeFolders(path)
     elif result_check[0]:
@@ -205,21 +208,30 @@ def Execute(input_command):
         if result_check[0]:
             subprocess.run(["start", result_check[1]], shell=True, check=True)
         elif not result_check[0]:
-            print(f"Sorry but this file or folder doesn't exist: {result_check[1]}")
+            GUIout(f"Sorry but this file or folder doesn't exist: {result_check[1]}")
     elif result_check[0]:
         subprocess.run(["start", current_path + splitted_command[1]], shell=True, check=True)
     else:
-        print(f"Sorry but this file or folder doesn't exist: {result_check[1]}")
+        GUIout(f"Sorry but this file or folder doesn't exist: {result_check[1]}")
+
+
 
 def main():
     """
-    It is the Main Function. The function, that provides connection between user and program.
+    It is the Main Function. The function, that provides connection between GUI, user and program.
     It gets the command and forward it to the functions.
     """
     global current_path
     command = ""
     while command.lower() != "exit":
-        command = input(current_path)
+        command = " "
+        GUIout(current_path)
+        while not GUI.is_keydown:
+            command = GUI.Send()
+        GUI.is_keydown = False
+        GUI.key = ""
+        GUI.entry.delete(0, "end")
+        GUI.entry.insert(0, "")
         if command.lower().startswith("cd "):
             Cd(command)
         if command.lower().startswith("dir"):
@@ -228,6 +240,18 @@ def main():
             Execute(command)
         if command.lower().startswith("exit"):
             exit()
-        command = ""
 
-main()
+
+if __name__ == "__main__":
+    """
+    It is the threading system. This is why the GUI and the main can work together.
+    """
+    main_thread = threading.Thread(target=main)
+    main_thread.start()
+    entry_window_thread = threading.Thread(target=GUIstart())
+    entry_window_thread.start()
+
+
+
+
+
